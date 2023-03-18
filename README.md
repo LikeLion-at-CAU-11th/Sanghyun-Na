@@ -6,3 +6,9 @@
 
 
 </div>
+
+### About Me
+I am a student majoring in Software Engineering at CAU.
+
+### Contact Me
+Contatct me via <a href="mailto:na_sanghyun@naver.com">my Email</a>.
