@@ -9,6 +9,6 @@ def hello_world(request):
         return JsonResponse({
             "status" : 200,
             "success" : True,
-            "message" : "메세지 전달 성공!",
+            "message" : "Message delivered!",
             "data" : "Hello World!",
         })
