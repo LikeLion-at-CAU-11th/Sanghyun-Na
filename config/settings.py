@@ -56,14 +56,19 @@ DJANGO_APPS = [
 
 PROJECT_APPS = [
     'posts',
+    'introduction',
+    'accounts',
 ]
 
 THIRD_PARTY_APPS = [
 
 ]
 
-
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
+
+# DB에서 기본 유저모델이 아닌 abstractUser 사용한다고 명시하기 위해
+AUTH_USER_MODEL = 'accounts.Member'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
