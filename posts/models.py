@@ -5,6 +5,8 @@ class BaseModel(models.Model):
     created_at = models.DateTimeField(verbose_name="작성일시", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="수정일시", auto_now=True)
 
+    # 필터를 이용해서 created_at을 활용해서, 오늘 세션 이후, 다음 세션 이전에 만들어진 post들만 모아서 보내주는 api
+
     class Meta:
         abstract = True
 
