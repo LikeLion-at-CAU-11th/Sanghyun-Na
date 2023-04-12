@@ -11,6 +11,6 @@ urlpatterns = [
     path('newcomment/<int:post_id>/', uploadComment, name='uploadComment'),
     path('createdbefore/<str:inputDate>/', getPostsBefore, name='getPostsBefore'),
     path('post_detail', get_all_posts, name='get_all_posts'),
-    path('post_detail/<int:id>', get_post_detail, name='get_post_detail'),
+    path('post_detail/<int:id>', post_detail, name='get_post_detail'),
 ]
 # <int:pk> 는 int 값을 받고 그걸 pk에 넘긴다는 뜻
