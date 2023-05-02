@@ -7,6 +7,9 @@
 
 </div>
 
+### 6주차 과제
+이미 EC2로 무중단 배포중인 프로젝트가 있어 프리티어 요금제 제한 때문에 스크린샷만 올립니다..! 현재는 URL 동작하지 않습니다.
+
 ### About Me
 I am a student majoring in Software Engineering at CAU.
 
