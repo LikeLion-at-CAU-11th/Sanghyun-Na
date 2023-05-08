@@ -7,6 +7,11 @@
 
 </div>
 
+### 6주차 과제
+이미 EC2로 무중단 배포중인 프로젝트가 있어 프리티어 요금제 제한 때문에 스크린샷만 올립니다..! 현재는 URL 동작하지 않습니다.
+<img width="1440" alt="image" src="https://user-images.githubusercontent.com/106161726/235700171-5a707750-cfc2-4c13-a803-4eb3d1d23ad8.png">
+
+
 ### About Me
 I am a student majoring in Software Engineering at CAU.
 
