@@ -8,24 +8,127 @@ from rest_framework import viewsets
 # from rest_framework import mixins
 # from rest_framework import generics
 # from django.http import JsonResponse
-# from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404
 # from django.views.decorators.http import require_http_methods
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 # from django.http import Http404
+
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import permissions
 
 # DRF는 FBV보다 CBV 선호
 # APIView > Mixins > Generic CBV > ViewSet
 
 ########### viewset ############
-class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
+# class PostViewSet(viewsets.ModelViewSet):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
 
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
+# class CommentViewSet(viewsets.ModelViewSet):
+#     queryset = Comment.objects.all()
+#     serializer_class = CommentSerializer
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, post):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return post.writer == request.user
+
+class PostList(APIView):
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def post(self, request, format=None):
+        request.data['writer'] = request.user.id
+        # 장고가 bearer token을 자동으로 인식하고 request에 넣어주도록 한다.
+        serializer = PostSerializer(data=request.data) # 시리얼라이징
+        if serializer.is_valid(): # 유효성 검사
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def get(self, request, format=None):
+        posts = Post.objects.all()
+        serializer = PostSerializer(posts, many=True) # 많은 post들을 받아오려면 (many=True) 써줘야 한다! 이렇게 에러뜨는 경우가 생각보다 많다.
+        return Response(serializer.data)
+    
+
+    # 수정 / 삭제 모두 할 수 있어야 하므로 put과 delete를 구현
+    def put(self,request):
+        id = request.data.id
+        request.data['writer'] = request.user.id
+        post = get_object_or_404(Post, id=id)
+        self.check_object_permissions(request, post)
+        serializer = PostSerializer(post, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self,request):
+        id = request.data.get('id')
+        request.data['writer'] = request.user.id
+        post = get_object_or_404(Post, id=id)
+        self.check_object_permissions(request, post)
+        post.delete()
+        return Response(data="Deleted Successfully",status=status.HTTP_202_ACCEPTED)
+
+
+
+
+class CommentList(APIView):
+    def post(self, request, format=None):
+        serializer = CommentSerializer(data=request.data) # 시리얼라이징
+        if serializer.is_valid(): # 유효성 검사
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, format=None):
+        comments = Comment.objects.all()
+        serializer = CommentSerializer(comments, many=True) # 많은 comment들을 받아오려면 (many=True) 써줘야 한다! 이렇게 에러뜨는 경우가 생각보다 많다.
+        return Response(serializer.data)
+
+class PostDetail(APIView):
+    def get(self,request,id):
+        post = get_object_or_404(Post, id=id)
+        serializer = PostSerializer(post)
+        return Response(serializer.data)
+    
+    def put(self,request,id):
+        post = get_object_or_404(Post, id=id)
+        serializer = PostSerializer(post, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data) 
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def delete(self,request,id):
+        post = get_object_or_404(Post, id=id)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+class CommentDetail(APIView):
+    def get(self,request,id):
+        comment = get_object_or_404(Comment, id=id)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
+    
+    def put(self,request,id):
+        comment = get_object_or_404(Comment, id=id)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data) 
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def delete(self,request,id):
+        post = get_object_or_404(Comment, id=id)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -89,69 +192,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 # })
 
 
-
-# class PostList(APIView):
-#     def post(self, request, format=None):
-#         serializer = PostSerializer(data=request.data) # 시리얼라이징
-#         if serializer.is_valid(): # 유효성 검사
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     def get(self, request, format=None):
-#         posts = Post.objects.all()
-#         serializer = PostSerializer(posts, many=True) # 많은 post들을 받아오려면 (many=True) 써줘야 한다! 이렇게 에러뜨는 경우가 생각보다 많다.
-#         return Response(serializer.data)
-
-# class CommentList(APIView):
-#     def post(self, request, format=None):
-#         serializer = CommentSerializer(data=request.data) # 시리얼라이징
-#         if serializer.is_valid(): # 유효성 검사
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     def get(self, request, format=None):
-#         comments = Comment.objects.all()
-#         serializer = CommentSerializer(comments, many=True) # 많은 comment들을 받아오려면 (many=True) 써줘야 한다! 이렇게 에러뜨는 경우가 생각보다 많다.
-#         return Response(serializer.data)
-
-# class PostDetail(APIView):
-#     def get(self,request,id):
-#         post = get_object_or_404(Post, id=id)
-#         serializer = PostSerializer(post)
-#         return Response(serializer.data)
-    
-#     def put(self,request,id):
-#         post = get_object_or_404(Post, id=id)
-#         serializer = PostSerializer(post, data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data) 
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     def delete(self,request,id):
-#         post = get_object_or_404(Post, id=id)
-#         post.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-# class CommentDetail(APIView):
-#     def get(self,request,id):
-#         comment = get_object_or_404(Comment, id=id)
-#         serializer = CommentSerializer(comment)
-#         return Response(serializer.data)
-    
-#     def put(self,request,id):
-#         comment = get_object_or_404(Comment, id=id)
-#         serializer = CommentSerializer(comment, data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data) 
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     def delete(self,request,id):
-#         post = get_object_or_404(Comment, id=id)
-#         post.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # postList와 postDetail이 있을 때, post생성은 어디에 들어가야할까?
 # postList에 넣는 것이 일반적, 하나만 올리는 거니까 detail아닌가? 하지만 List가 일반적이라고 한다.
