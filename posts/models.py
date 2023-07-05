@@ -1,4 +1,5 @@
 from django.db import models
+from accounts.models import Member
 
 # Create your models here.
 class BaseModel(models.Model):
@@ -19,7 +20,8 @@ class Post(BaseModel):
     )
 
     id = models.AutoField(primary_key=True)
-    writer = models.CharField(verbose_name="작성자", max_length=20)
+    # writer = models.CharField(verbose_name="작성자", max_length=20)
+    writer = models.ForeignKey(to=Member, on_delete=models.CASCADE)
     content = models.TextField(verbose_name="내용")
     category = models.CharField(choices=CHOICES, max_length=20)
  
