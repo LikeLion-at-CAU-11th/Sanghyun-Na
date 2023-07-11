@@ -1,31 +1,84 @@
 from django.shortcuts import render
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_http_methods
 from .models import Post
 from .models import Comment
-import json
-import datetime
+from .serializers import *
+from rest_framework import viewsets
 
 # APIView를 사용하기 위해 import
-from .serializers import *
+# from rest_framework import mixins
+# from rest_framework import generics
+# from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+# from django.views.decorators.http import require_http_methods
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import Http404
+# from django.http import Http404
+
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import permissions
+
+# DRF는 FBV보다 CBV 선호
+# APIView > Mixins > Generic CBV > ViewSet
+
+########### viewset ############
+# class PostViewSet(viewsets.ModelViewSet):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
+
+# class CommentViewSet(viewsets.ModelViewSet):
+#     queryset = Comment.objects.all()
+#     serializer_class = CommentSerializer
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, post):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return post.writer == request.user
 
 class PostList(APIView):
+    permission_classes = [IsOwnerOrReadOnly]
+
     def post(self, request, format=None):
+        request.data['writer'] = request.user.id
+        # 장고가 bearer token을 자동으로 인식하고 request에 넣어주도록 한다.
         serializer = PostSerializer(data=request.data) # 시리얼라이징
         if serializer.is_valid(): # 유효성 검사
+
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
     def get(self, request, format=None):
         posts = Post.objects.all()
         serializer = PostSerializer(posts, many=True) # 많은 post들을 받아오려면 (many=True) 써줘야 한다! 이렇게 에러뜨는 경우가 생각보다 많다.
         return Response(serializer.data)
+    
+
+    # 수정 / 삭제 모두 할 수 있어야 하므로 put과 delete를 구현
+    def put(self,request):
+        id = request.data.id
+        request.data['writer'] = request.user.id
+        post = get_object_or_404(Post, id=id)
+        self.check_object_permissions(request, post)
+        serializer = PostSerializer(post, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self,request):
+        id = request.data.get('id')
+        request.data['writer'] = request.user.id
+        post = get_object_or_404(Post, id=id)
+        self.check_object_permissions(request, post)
+        post.delete()
+        return Response(data="Deleted Successfully",status=status.HTTP_202_ACCEPTED)
+
+
+
 
 class CommentList(APIView):
     def post(self, request, format=None):
@@ -77,19 +130,72 @@ class CommentDetail(APIView):
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+
+
+###################################
+######### DEPRECATED CODE #########
+###################################
+
+
+## MIXINS ##
+
+# class PostListMixins(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
+
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request)
+        
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request,*args,**kwargs)
+    
+# class PostDetailMixins(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
+
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request,*args,**kwargs)
+    
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request,*args,**kwargs)
+    
+#     def delete(self, request, *args, **kwargs):
+#         return self.destroy(request,*args,**kwargs)
+
+
+## genericAPIview ##
+
+# class PostListGenericAPIView(generics.ListCreateAPIView):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
+
+# class PostDetailGenericAPIView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Post.objects.all()
+#     serializer_class = PostSerializer
+
+
+
+
+## API VIEW ##
+
+# post_list = PostViewSet.as_view({
+#     'get' : 'list',
+#     'post' : 'create',
+# })
+
+# post_detail_vs = PostViewSet.as_view({
+#     'get' : 'retrieve',
+#     'put' : 'update',
+#     'patch' : 'partial_update',
+#     'delete' : 'destroy',
+# })
+
+
+
 # postList와 postDetail이 있을 때, post생성은 어디에 들어가야할까?
 # postList에 넣는 것이 일반적, 하나만 올리는 거니까 detail아닌가? 하지만 List가 일반적이라고 한다.
 
-
-def hello_world(request):
-    if request.method == "GET":
-        return JsonResponse({
-            "status" : 200,
-            "success" : True,
-            "message" : "Message delivered!",
-            "data" : "Hello World!",
-        })
-    
 # @require_http_methods(["GET", "PATCH", "DELETE"])
 # def post_detail(request, id):
 #     if request.method == "GET":
@@ -216,12 +322,6 @@ def hello_world(request):
 #         }
 #     })
 
-# # def isNewer(a,b){
-        
-# # }
-
-# # def isBetweenDates(start, end, middle):
-
 
 # def getPostsBefore(request, inputDate):
 #     # 연도를 안썼으면 올해로, 두자리면 썼으면 앞에 붙여서"
@@ -267,6 +367,7 @@ def hello_world(request):
 #         'message':'Success',
 #         'data': filteredPosts_list
 #     })
+
 # def get_all_posts(resquest):
 #     found = True
 #     data = []
