@@ -13,25 +13,36 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 import json
+import environ
 from django.core.exceptions import *
 from datetime import timedelta
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# reading .env file
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+environ.Env.read_env(
+    env_file=os.path.join(BASE_DIR, '.env')
+)
 
-secret_file = os.path.join(BASE_DIR, 'secrets.json') # secrets.json 파일 위치를 명시
+# secret_file = os.path.join(BASE_DIR, 'secrets.json') # secrets.json 파일 위치를 명시
 
-with open(secret_file) as f:
-    secrets = json.loads(f.read())
+# with open(secret_file) as f:
+#     secrets = json.loads(f.read())
 
-def get_secret(setting, secrets=secrets):
-    try:
-        return secrets[setting]
-    except KeyError:
-        error_msg = "Set the {} environment variable".format(setting)
-        raise ImproperlyConfigured(error_msg)
+# def get_secret(setting, secrets=secrets):
+#     try:
+#         return secrets[setting]
+#     except KeyError:
+#         error_msg = "Set the {} environment variable".format(setting)
+#         raise ImproperlyConfigured(error_msg)
 
-SECRET_KEY = get_secret("SECRET_KEY")
+SECRET_KEY = env('SECRET_KEY')
+OAUTH_SECRET = env('OAUTH_SECRET')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
