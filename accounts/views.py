@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from django.conf import settings
 from rest_framework_simplejwt.serializers import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -105,7 +105,7 @@ from allauth.socialaccount.models import SocialAccount
 def google_callback(request):
     # 액세스 토큰을 요청하는 데에 필요한 4가지의 정보
     client_id = "294923128805-itagkik0thsukus3agg63bonsu8o8r2q.apps.googleusercontent.com"
-    client_secret = OAUTH_SECRET
+    client_secret = getattr(settings, 'OAUTH_SECRET', None)
     print()
     print(f"SECRET IS => {client_secret}")
     print()
