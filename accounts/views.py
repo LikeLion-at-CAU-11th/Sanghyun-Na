@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from accounts.serializers import RegisterSerializer, AuthSerializer
 import os
-OAUTH_SECRET = os.environ.get("OAUTH_SECRET")
+# OAUTH_SECRET = os.environ.get("OAUTH_SECRET")
 
 class RegisterView(APIView):
     serializer_class = RegisterSerializer

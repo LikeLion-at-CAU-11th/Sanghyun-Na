@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from posts.models import *
+from config import settings
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -11,6 +12,9 @@ class PostSerializer(serializers.ModelSerializer):
 		# 전부 가져오고 싶을 때
     fields = "__all__"
 		
+	
+
+	
 	# 추가
 		# 가져올 필드를 지정해줄 수도 있다.
 		# fields = ['writer', 'content']
