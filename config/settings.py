@@ -43,6 +43,12 @@ environ.Env.read_env(
 
 SECRET_KEY = env('SECRET_KEY')
 OAUTH_SECRET = env('OAUTH_SECRET')
+DB_PASSWORD = env('DB_PASSWORD')
+DB_HOST = env('DB_HOST')
+DB_USER = env('DB_USER')
+S3_ACCESS_ID = env('S3_ACCESS_ID')
+S3_ACCESS_KEY = env('S3_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -92,6 +98,8 @@ THIRD_PARTY_APPS = [
     # allauth.socialaccount.providers.{소셜로그인제공업체}
     # {소셜로그인제공업체} 부분에는 구글 외에도 카카오,네이버 추가 가능
     'allauth.socialaccount.providers.google',
+
+    'storages'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
@@ -174,13 +182,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
+
+DATABASES = {
+	'default': {
+		'ENGINE': 'django.db.backends.mysql',
+		'NAME': 'testdb',
+		'USER': DB_USER,
+		'PASSWORD': DB_PASSWORD,
+		'HOST': DB_HOST,
+		'PORT': '3306',
+	}
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -222,3 +241,21 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# AWS 권한 설정
+AWS_ACCESS_KEY_ID = S3_ACCESS_ID
+AWS_SECRET_ACCESS_KEY = S3_ACCESS_KEY
+AWS_REGION = 'ap-northeast-1'
+
+# AWS S3 버킷 이름
+# AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME
+
+# AWS S3 버킷의 URL
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

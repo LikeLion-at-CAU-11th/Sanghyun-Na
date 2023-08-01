@@ -1,5 +1,6 @@
 from django.db import models
 from accounts.models import Member
+from storages.backends.s3boto3 import S3Boto3Storage
 
 # Create your models here.
 class BaseModel(models.Model):
@@ -24,6 +25,8 @@ class Post(BaseModel):
     writer = models.ForeignKey(to=Member, on_delete=models.CASCADE)
     content = models.TextField(verbose_name="내용")
     category = models.CharField(choices=CHOICES, max_length=20)
+    # blank와 null 파라미터를 넣어주어 필수사항에서 제외함
+    thumbnail = models.ImageField(verbose_name="썸네일", upload_to="post/thumbnail", blank=True, null=True, storage=S3Boto3Storage())
  
 
 class Comment(BaseModel):

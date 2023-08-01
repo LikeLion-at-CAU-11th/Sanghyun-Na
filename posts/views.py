@@ -18,6 +18,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework import permissions
 
+from .permissions import IsOwnerOrReadOnly
+
 # DRF는 FBV보다 CBV 선호
 # APIView > Mixins > Generic CBV > ViewSet
 
@@ -30,16 +32,13 @@ from rest_framework import permissions
 #     queryset = Comment.objects.all()
 #     serializer_class = CommentSerializer
 
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    def has_object_permission(self, request, view, post):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return post.writer == request.user
+
 
 class PostList(APIView):
     permission_classes = [IsOwnerOrReadOnly]
 
     def post(self, request, format=None):
+        request.data._mutable=True
         request.data['writer'] = request.user.id
         # 장고가 bearer token을 자동으로 인식하고 request에 넣어주도록 한다.
         serializer = PostSerializer(data=request.data) # 시리얼라이징
